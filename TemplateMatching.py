@@ -18,13 +18,19 @@ res = cv2.matchTemplate(img_gray,template,cv2.TM_CCOEFF_NORMED)
  
 # Specify a threshold
 threshold = 0.4
+
+if np.max(res) < threshold :
+    print("No Sudoku grid found in image.")
+    exit()
  
-# Store the coordinates of matched area in a numpy array
-loc = np.where( res >= threshold)
+# Tuple loc holds the minimum and maximum matches and their respective coordinates
+loc = cv2.minMaxLoc(res)    #loc[0] -> minimum value
+                            #loc[1] -> maximum value
+                            #loc[2] -> coordinates of minimum
+                            #loc[3] -> coordinates of maximum
  
 # Draw a rectangle around the matched region.
-for pt in zip(*loc[::-1]):
-    cv2.rectangle(img_rgb, pt, (pt[0] + w, pt[1] + h), (0,255,255), 2)
+cv2.rectangle(img_rgb, loc[3], (loc[3][0] + w, loc[3][1] + h), (0,0,255), 2)
  
 # Show the final image with the matched area.
 cv2.imshow('Detected',img_rgb)
