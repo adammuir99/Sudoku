@@ -42,7 +42,7 @@ img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
 found = None
 
 # Loop over the scales of the image
-for scale in np.linspace(0.2, 1.0, 20)[::-1] :
+for scale in np.linspace(0.2, 1.0, 40)[::-1] :
     # resize the image according to the scale, and keep track
 	# of the ratio of the resizing
 	resized = imutils.resize(img_gray, width = int(img_gray.shape[1] * scale))
