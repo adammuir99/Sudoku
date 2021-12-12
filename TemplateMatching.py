@@ -64,8 +64,8 @@ for scale in np.linspace(0.2, 1.0, 20)[::-1] :
 	clone = np.dstack([edged, edged, edged])
 	cv2.rectangle(clone, (maxLoc[0], maxLoc[1]),
 		(maxLoc[0] + tW, maxLoc[1] + tH), (0, 0, 255), 2)
-	#cv2.imshow("Visualize", clone)
-	#cv2.waitKey(0)
+	cv2.imshow("Visualize", clone)
+	cv2.waitKey(0)
 
 	# if we have found a new maximum correlation value, then update
 	# the bookkeeping variable
@@ -132,12 +132,14 @@ for b in boxes.splitlines() :
     # Enter the digit into our board
     input_board[col][row] = int(b[0])
 
-# Show the detected digits
-cv2.imshow("Text", img_text)
-
 # Display the detected board in the terminal
 print("\nThe input board is:")
 print(np.matrix(input_board))
+
+# Show the detected digits
+cv2.imshow("Text", img_text)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 
 # Solve the sudoku puzzle
 print("\nThe solved board is:")
@@ -154,6 +156,7 @@ with open(r'Solution.txt', 'r') as infile, \
 # Generate an array from the text document
 solved_board = np.genfromtxt("Formatted_Solution.txt", dtype=int)
 
+# Iterate through the rows and columns, entering the solutions into the empty spaces
 for row in range (9) : 
     for col in range (9) :
         Xcoord = int(row * boxW + 0.25 * boxW)
@@ -161,9 +164,6 @@ for row in range (9) :
 
         if input_board[col][row] == 0:
             cv2.putText(img_crop, str(solved_board[col][row]), (Xcoord, Ycoord), cv2.FONT_HERSHEY_DUPLEX, 3, (50, 50, 255), 2)
-
-cv2.waitKey(0)
-cv2.destroyAllWindows()
 
 cv2.imshow("Solution", img_crop)
 
