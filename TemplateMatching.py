@@ -3,6 +3,17 @@ import cv2
 import numpy as np
 import imutils
 import pytesseract
+import Sudoku
+
+input_board = [[0,0,0,0,0,0,0,0,0],
+               [0,0,0,0,0,0,0,0,0],
+               [0,0,0,0,0,0,0,0,0],
+               [0,0,0,0,0,0,0,0,0],
+               [0,0,0,0,0,0,0,0,0],
+               [0,0,0,0,0,0,0,0,0],
+               [0,0,0,0,0,0,0,0,0],
+               [0,0,0,0,0,0,0,0,0],
+               [0,0,0,0,0,0,0,0,0]]
 
 # First match the image with the sudoku board template
 # to locate the sudoku board within the template ###########################################################################################
@@ -86,7 +97,9 @@ img_crop = cv2.resize(img_crop, None, fx=1.3, fy=1.3, interpolation=cv2.INTER_CU
 img_text = cv2.cvtColor(img_crop, cv2.COLOR_BGR2RGB)
 
 hImg, wImg,_ = img_text.shape
+
 boxes = pytesseract.image_to_boxes(img_text, config="--psm 6 -c tessedit_char_whitelist=0123456789")
+
 for b in boxes.splitlines() :
     b = b.split(' ')
     print(b)
@@ -94,6 +107,41 @@ for b in boxes.splitlines() :
     cv2.rectangle(img_text, (x,hImg-y), (w,hImg-h), (0,0,255), 1)
     cv2.putText(img_text, b[0], (x, hImg-y+25), cv2.FONT_HERSHEY_PLAIN, 1, (50, 50, 255), 2)
 
+    # Get the coordinates of the found digit
+    centerx = int((x+w)/2)
+    centery = int(hImg - (y+h)/2)
+
+    # Define the size of each box in the sudoku grid
+    boxW = int(wImg/9)
+    boxH = int(hImg/9)
+
+    # Check which row the digit is in
+    row = 0
+    for row_ in range(9) :
+        if centerx < (row_ * boxW + boxW) :
+            row = row_
+            break
+    
+    # Check which col the digit is in
+    col = 0
+    for col_ in range(9) :
+        if centery < (col_ * boxH + boxH) :
+            col = col_
+            break
+    
+    # Enter the digit into our board
+    input_board[col][row] = int(b[0])
+
+# Show the detected digits
 cv2.imshow("Text", img_text)
+
+# Display the detected board in the terminal
+print("\nThe input board is:")
+print(np.matrix(input_board))
+
+# Solve the sudoku puzzle
+print("\nThe solved board is:")
+Sudoku.solve(input_board)
+
 cv2.waitKey(0)
 cv2.destroyAllWindows()
