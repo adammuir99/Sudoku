@@ -102,6 +102,15 @@ hImg, wImg,_ = img_text.shape
 boxW = int(wImg/9)
 boxH = int(hImg/9)
 
+# Remove horizontal and vertical lines
+kernel_vertical = cv2.getStructuringElement(cv2.MORPH_RECT, (1,50))
+temp1 = 255 - cv2.morphologyEx(img_text, cv2.MORPH_CLOSE, kernel_vertical)
+horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (50,1))
+temp2 = 255 - cv2.morphologyEx(img_text, cv2.MORPH_CLOSE, horizontal_kernel)
+temp3 = cv2.add(temp1, temp2)
+result = cv2.add(temp3, img_text)
+img_text = result
+
 boxes = pytesseract.image_to_boxes(img_text, config="--psm 6 -c tessedit_char_whitelist=0123456789")
 
 for b in boxes.splitlines() :
