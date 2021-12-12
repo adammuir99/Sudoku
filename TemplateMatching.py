@@ -98,6 +98,10 @@ img_text = cv2.cvtColor(img_crop, cv2.COLOR_BGR2RGB)
 
 hImg, wImg,_ = img_text.shape
 
+# Define the size of each box in the sudoku grid
+boxW = int(wImg/9)
+boxH = int(hImg/9)
+
 boxes = pytesseract.image_to_boxes(img_text, config="--psm 6 -c tessedit_char_whitelist=0123456789")
 
 for b in boxes.splitlines() :
@@ -110,10 +114,6 @@ for b in boxes.splitlines() :
     # Get the coordinates of the found digit
     centerx = int((x+w)/2)
     centery = int(hImg - (y+h)/2)
-
-    # Define the size of each box in the sudoku grid
-    boxW = int(wImg/9)
-    boxH = int(hImg/9)
 
     # Check which row the digit is in
     row = 0
@@ -142,6 +142,30 @@ print(np.matrix(input_board))
 # Solve the sudoku puzzle
 print("\nThe solved board is:")
 Sudoku.solve(input_board)
+
+# Remove unnecessary characters from text document
+with open(r'Solution.txt', 'r') as infile, \
+     open(r'Formatted_Solution.txt', 'w') as outfile:
+    data = infile.read()
+    data = data.replace("[", " ")
+    data = data.replace("]", " ")
+    outfile.write(data)
+
+# Generate an array from the text document
+solved_board = np.genfromtxt("Formatted_Solution.txt", dtype=int)
+
+for row in range (9) : 
+    for col in range (9) :
+        Xcoord = int(row * boxW + 0.25 * boxW)
+        Ycoord = int(col * boxH + 0.75 * boxH)
+
+        if input_board[col][row] == 0:
+            cv2.putText(img_crop, str(solved_board[col][row]), (Xcoord, Ycoord), cv2.FONT_HERSHEY_DUPLEX, 3, (50, 50, 255), 2)
+
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+cv2.imshow("Solution", img_crop)
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
