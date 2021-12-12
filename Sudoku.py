@@ -27,7 +27,6 @@ def solve(board) :
                         board[y][x] = 0
                 return
     print(np.matrix(board))
-    #input("Press Enter to see additional solutions.")
 
     # Save the solution to a text document
     original_stdout = sys.stdout # Save a reference to the original standard output

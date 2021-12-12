@@ -94,9 +94,9 @@ img_crop = img_rgb[startY:endY, startX:endX].copy()
 img_crop = cv2.resize(img_crop, None, fx=1.3, fy=1.3, interpolation=cv2.INTER_CUBIC)
 
 # Tesseract only works with RGB images, OpenCV uses BGR
-img_text = cv2.cvtColor(img_crop, cv2.COLOR_BGR2RGB)
+img_text = cv2.cvtColor(img_crop, cv2.COLOR_BGR2GRAY)
 
-hImg, wImg,_ = img_text.shape
+hImg, wImg = img_text.shape
 
 # Define the size of each box in the sudoku grid
 boxW = int(wImg/9)
@@ -111,7 +111,12 @@ temp3 = cv2.add(temp1, temp2)
 result = cv2.add(temp3, img_text)
 img_text = result
 
-boxes = pytesseract.image_to_boxes(img_text, config="--psm 6 -c tessedit_char_whitelist=0123456789")
+img_text = cv2.medianBlur(img_text, 5)
+
+img_text = cv2.adaptiveThreshold(img_text,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
+            cv2.THRESH_BINARY,11,2)
+
+boxes = pytesseract.image_to_boxes(img_text, config="--psm 6 -c tessedit_char_whitelist=0123456789 --tessdata-dir 'C:\\Program Files\\Tesseract-OCR\\tessdata'")
 
 for b in boxes.splitlines() :
     b = b.split(' ')
