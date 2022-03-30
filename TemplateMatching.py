@@ -4,6 +4,7 @@ import numpy as np
 import imutils
 import pytesseract
 import Sudoku
+import argparse
 
 input_board = [[0,0,0,0,0,0,0,0,0],
                [0,0,0,0,0,0,0,0,0],
@@ -14,6 +15,11 @@ input_board = [[0,0,0,0,0,0,0,0,0],
                [0,0,0,0,0,0,0,0,0],
                [0,0,0,0,0,0,0,0,0],
                [0,0,0,0,0,0,0,0,0]]
+
+# Check for arguments in command line
+parser = argparse.ArgumentParser()
+parser.add_argument('-d', action='store_true')
+args = parser.parse_args()
 
 # First match the image with the sudoku board template
 # to locate the sudoku board within the template ###########################################################################################
@@ -28,8 +34,10 @@ template = cv2.Canny(template, 50, 200)
 (tH, tW) = template.shape[:2]
 
 # Display the template's canny edges
-cv2.imshow("Template", template)
-cv2.waitKey(0)
+if args.d:
+    cv2.imshow("Template", template)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 # Now begin multiscaling the image
 # Read the main image
@@ -44,33 +52,34 @@ found = None
 # Loop over the scales of the image
 for scale in np.linspace(0.2, 1.0, 40)[::-1] :
     # resize the image according to the scale, and keep track
-	# of the ratio of the resizing
-	resized = imutils.resize(img_gray, width = int(img_gray.shape[1] * scale))
-	r = img_gray.shape[1] / float(resized.shape[1])
+    # of the ratio of the resizing
+    resized = imutils.resize(img_gray, width = int(img_gray.shape[1] * scale))
+    r = img_gray.shape[1] / float(resized.shape[1])
 
-	# if the resized image is smaller than the template, then break
-	# from the loop
-	if resized.shape[0] < tH or resized.shape[1] < tW:
-		break
+    # if the resized image is smaller than the template, then break
+    # from the loop
+    if resized.shape[0] < tH or resized.shape[1] < tW:
+        break
 
     # detect edges in the resized, grayscale image and apply template
-	# matching to find the template in the image
-	edged = cv2.Canny(resized, 10, 50)
-	result = cv2.matchTemplate(edged, template, cv2.TM_CCOEFF)
-	(_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
+    # matching to find the template in the image
+    edged = cv2.Canny(resized, 10, 50)
+    result = cv2.matchTemplate(edged, template, cv2.TM_CCOEFF)
+    (_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
 
-	# Visualize the iteration
-	# draw a bounding box around the detected region
-	clone = np.dstack([edged, edged, edged])
-	cv2.rectangle(clone, (maxLoc[0], maxLoc[1]),
-		(maxLoc[0] + tW, maxLoc[1] + tH), (0, 0, 255), 2)
-	cv2.imshow("Visualize", clone)
-	cv2.waitKey(0)
+    # Visualize the iteration
+    # draw a bounding box around the detected region
+    if args.d:
+        clone = np.dstack([edged, edged, edged])
+        cv2.rectangle(clone, (maxLoc[0], maxLoc[1]),
+            (maxLoc[0] + tW, maxLoc[1] + tH), (0, 0, 255), 2)
+        cv2.imshow("Visualize", clone)
+        cv2.waitKey(0)
 
-	# if we have found a new maximum correlation value, then update
-	# the bookkeeping variable
-	if found is None or maxVal > found[0]:
-		found = (maxVal, maxLoc, r)
+    # if we have found a new maximum correlation value, then update
+    # the bookkeeping variable
+    if found is None or maxVal > found[0]:
+        found = (maxVal, maxLoc, r)
 
 # unpack the bookkeeping variable and compute the (x, y) coordinates
 # of the bounding box based on the resized ratio
@@ -79,10 +88,11 @@ for scale in np.linspace(0.2, 1.0, 40)[::-1] :
 (endX, endY) = (int((maxLoc[0] + tW) * r), int((maxLoc[1] + tH) * r))
 
 # draw a bounding box around the detected result and display the image
-cv2.rectangle(img_rgb, (startX, startY), (endX, endY), (0, 0, 255), 2)
-cv2.imshow("Image", img_rgb)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+if args.d:
+    cv2.rectangle(img_rgb, (startX, startY), (endX, endY), (0, 0, 255), 2)
+    cv2.imshow("Image", img_rgb)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 # Next we will detect the numbers that are found within the bounding box #################################################################
 pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
@@ -151,9 +161,10 @@ print("\nThe input board is:")
 print(np.matrix(input_board))
 
 # Show the detected digits
-cv2.imshow("Text", img_text)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+if args.d:
+    cv2.imshow("Text", img_text)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 # Solve the sudoku puzzle
 print("\nThe solved board is:")
