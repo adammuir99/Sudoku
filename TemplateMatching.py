@@ -1,5 +1,6 @@
 from time import perf_counter_ns
 import cv2
+from cv2 import THRESH_BINARY
 import numpy as np
 import imutils
 import pytesseract
@@ -28,7 +29,7 @@ template = cv2.imread('template.jpg')
 # Convert the template to grayscale
 template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
 # Get the Canny edges for increased accuracy
-template = cv2.Canny(template, 50, 200)
+#template = cv2.Canny(template, 50, 200)
 
 # Store width and height of template
 (tH, tW) = template.shape[:2]
@@ -36,6 +37,18 @@ template = cv2.Canny(template, 50, 200)
 # Display the template's canny edges
 if args.d:
     cv2.imshow("Template", template)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+# Create a mask for the contents of each box
+ret, mask = cv2.threshold(template, 200, 255, cv2.THRESH_BINARY)
+
+# Invert the colours of the mask
+mask = cv2.bitwise_not(mask)
+
+# Display the Mask
+if args.d:
+    cv2.imshow("Mask", mask)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
@@ -63,29 +76,30 @@ for scale in np.linspace(0.2, 1.0, 40)[::-1] :
 
     # detect edges in the resized, grayscale image and apply template
     # matching to find the template in the image
-    edged = cv2.Canny(resized, 10, 50)
-    result = cv2.matchTemplate(edged, template, cv2.TM_CCOEFF)
-    (_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
+    result = cv2.matchTemplate(resized, template, cv2.TM_SQDIFF, None, mask)
+    (minVal, _, minLoc, _) = cv2.minMaxLoc(result)
 
     # Visualize the iteration
     # draw a bounding box around the detected region
     if args.d:
-        clone = np.dstack([edged, edged, edged])
-        cv2.rectangle(clone, (maxLoc[0], maxLoc[1]),
-            (maxLoc[0] + tW, maxLoc[1] + tH), (0, 0, 255), 2)
+        print("Smaller value = closer the match")
+        print(minVal)
+        clone = np.dstack([resized, resized, resized])
+        cv2.rectangle(clone, (minLoc[0], minLoc[1]),
+            (minLoc[0] + tW, minLoc[1] + tH), (0, 0, 255), 2)
         cv2.imshow("Visualize", clone)
         cv2.waitKey(0)
 
     # if we have found a new maximum correlation value, then update
     # the bookkeeping variable
-    if found is None or maxVal > found[0]:
-        found = (maxVal, maxLoc, r)
+    if found is None or minVal < found[0]:
+        found = (minVal, minLoc, r)
 
 # unpack the bookkeeping variable and compute the (x, y) coordinates
 # of the bounding box based on the resized ratio
-(_, maxLoc, r) = found
-(startX, startY) = (int(maxLoc[0] * r), int(maxLoc[1] * r))
-(endX, endY) = (int((maxLoc[0] + tW) * r), int((maxLoc[1] + tH) * r))
+(_, minLoc, r) = found
+(startX, startY) = (int(minLoc[0] * r), int(minLoc[1] * r))
+(endX, endY) = (int((minLoc[0] + tW) * r), int((minLoc[1] + tH) * r))
 
 # draw a bounding box around the detected result and display the image
 if args.d:
